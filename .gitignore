@@ -55,3 +55,1453 @@ __history/
 
 # Castalia statistics file
 *.stat
+
+unit ss3p;
+
+interface
+
+uses
+  Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
+  Dialogs, StdCtrls, DB, DBTables, OleServer, ExcelXP, ExtCtrls, TeeProcs,
+  TeEngine, Chart, Series, ADODB,math, Grids, DBGrids, DBCtrls, ComCtrls, jpeg;
+
+type
+  TForm1 = class(TForm)
+    ADOConnection1: TADOConnection;
+    ADOQuery1: TADOQuery;
+    ADOTable1: TADOTable;
+    DataSource1: TDataSource;
+    ExcelApplication1: TExcelApplication;
+    ADOConnection2: TADOConnection;
+    ADOQuery2: TADOQuery;
+    DataSource2: TDataSource;
+    ADOQuery3: TADOQuery;
+    DBGrid1: TDBGrid;
+    DBNavigator1: TDBNavigator;
+    Panel1: TPanel;
+    PageControl1: TPageControl;
+    TabSheet1: TTabSheet;
+    Label2: TLabel;
+    Label3: TLabel;
+    Label4: TLabel;
+    Label5: TLabel;
+    Label6: TLabel;
+    Label7: TLabel;
+    Label1: TLabel;
+    Label8: TLabel;
+    Label9: TLabel;
+    Edit2: TEdit;
+    Button2: TButton;
+    Edit3: TEdit;
+    Edit4: TEdit;
+    Button3: TButton;
+    ComboBox1: TComboBox;
+    Button1: TButton;
+    Button4: TButton;
+    Edit1: TEdit;
+    Button5: TButton;
+    Button6: TButton;
+    CheckBox1: TCheckBox;
+    Edit5: TEdit;
+    Button7: TButton;
+    Edit6: TEdit;
+    Button8: TButton;
+    Edit7: TEdit;
+    Button10: TButton;
+    Button11: TButton;
+    Button12: TButton;
+    TabSheet3: TTabSheet;
+    Panel2: TPanel;
+    Panel3: TPanel;
+    Edit8: TEdit;
+    Button9: TButton;
+    Image1: TImage;
+    Button13: TButton;
+    Button14: TButton;
+    Button15: TButton;
+    Button16: TButton;
+    Button17: TButton;
+    Button18: TButton;
+    Button19: TButton;
+    procedure Button2Click(Sender: TObject);
+    procedure Button3Click(Sender: TObject);
+    procedure Button4Click(Sender: TObject);
+    procedure FormShow(Sender: TObject);
+    procedure Button1Click(Sender: TObject);
+    procedure Button5Click(Sender: TObject);
+    procedure Button6Click(Sender: TObject);
+    procedure Button7Click(Sender: TObject);
+    procedure Button8Click(Sender: TObject);
+    procedure Button9Click(Sender: TObject);
+    procedure Button10Click(Sender: TObject);
+    procedure Button11Click(Sender: TObject);
+    procedure Button12Click(Sender: TObject);
+    procedure Button13Click(Sender: TObject);
+    procedure Button14Click(Sender: TObject);
+    procedure Button16Click(Sender: TObject);
+    procedure Button15Click(Sender: TObject);
+    procedure Button17Click(Sender: TObject);
+    procedure Button18Click(Sender: TObject);
+    procedure Button19Click(Sender: TObject);
+  private
+    { Private declarations }
+  public
+    { Public declarations }
+  end;
+
+var
+  Form1: TForm1;
+
+implementation
+
+uses ss3prp1, Unit2, Unit1, ss3prp3, ss3prp4, Unit4;
+
+{$R *.dfm}
+
+procedure TForm1.Button2Click(Sender: TObject);                        // 從工單號查模組清單及電測資料
+var
+  max,min,r,average,stdev,total:array[1..8] of real;
+  i,j:integer;
+  s1,s:string;
+begin
+  with form2 do
+    begin
+//      s1:=copy(Edit2.text,5,1);
+//      if s1='0' then s:=copy(Edit2.text,6,5);
+//      s1:=copy(Edit2.text,5,2);
+//      if s1='10' then s:='A'+copy(Edit2.text,7,4);
+//      if s1='11' then s:='B'+copy(Edit2.text,7,4);
+//      if s1='12' then s:='C'+copy(Edit2.text,7,4);
+
+      ADOQuery4.close;
+      ADOQuery4.SQL.Clear;
+      ADOQuery4.SQL.add('select * from  MOCTT');
+      ADOQuery4.sql.add('where TT001=:TT001');
+      ADOQuery4.sql.add('and TT002=:TT002');
+      ADOQuery4.Parameters.ParamByName('TT001').Value:= Edit7.Text;
+      ADOQuery4.Parameters.ParamByName('TT002').Value:= Edit2.Text;
+      ADOQuery4.OPEN;
+
+      ADOQuery1.close;
+      ADOQuery1.SQL.Clear;
+      ADOQuery1.SQL.add('select Mes.DtCr,MesCel.CelT,Mes.SerN,MesRes.RsMxp,MesRes.RsVoc,MesRes.RsIsc,MesRes.RsVpm,MesRes.RsIpm,MesRes.RsMxe,MesT.T4,MesRes.RsRsr,Mes.Id,MesRes.RsRsh,Mes.StId,MesCel.Dcel,MesRes.RsEff');
+      ADOQuery1.sql.add('from MesCel,Mes,MesRes,MesT');
+      ADOQuery1.sql.add('where Mes.SerN >=:srn1 ');
+      ADOQuery1.sql.add('and Mes.SerN <=:srn2 ');
+      ADOQuery1.sql.add('and Mes.Id=MesRes.Id');
+      ADOQuery1.sql.add('and Mes.CelId=MesCel.Id');
+      ADOQuery1.sql.add('and MesT.MesId=Mes.Id');
+//      ADOQuery1.sql.add('and MesT.MesTypId=4');
+//      ADOQuery1.sql.add('and MesT.MesTypId=6');
+      if CheckBox1.Checked=true then ADOQuery1.sql.add('and Mes.OK=1');
+      ADOQuery1.sql.add('and Mes.StId=MesT.StId');          //2010.4.16 增加 simulator Id
+      ADOQuery1.sql.add('and Mes.StId=MesRes.StId');        //2010.4.16 增加 simulator Id
+      ADOQuery1.sql.add('and Mes.StId=MesCel.StId');        //2010.4.16 增加 simulator Id
+      if ComboBox1.ItemIndex= 0 then ADOQuery1.sql.add('order by Mes.SerN');
+      if ComboBox1.ItemIndex= 1 then ADOQuery1.sql.add('order by Mes.DtCr');
+      if ComboBox1.ItemIndex= 2 then ADOQuery1.sql.add('order by MesRes.RsMxp');
+//      ADOQuery1.Parameters.parambyname('srn1').VALUE:= Form1.Edit2.text+'.....';
+//      ADOQuery1.Parameters.parambyname('srn2').VALUE:= Form1.Edit2.text+'zzzzz';
+//      ADOQuery1.Parameters.parambyname('srn1').VALUE:= 'KS01'+s+'........';      //2011.01.20 序號編碼變更
+//      ADOQuery1.Parameters.parambyname('srn2').VALUE:= 'KS01'+s+'zzzzzzzz';      //2011.01.20 序號編碼變更
+      ADOQuery1.Parameters.parambyname('srn1').VALUE:= ADOQuery4.fieldbyname('TT003').value;      //2011.01.26 序號編碼變更
+      ADOQuery1.Parameters.parambyname('srn2').VALUE:= ADOQuery4.fieldbyname('TT004').value;      //2011.01.26 序號編碼變更
+//      Query1.parambyname('srn1').AsSTRING:= 'W'+copy(Form1.Edit2.text,5,9)+'.f000';
+//      Query1.parambyname('srn2').AsSTRING:= 'W'+copy(Form1.Edit2.text,5,9)+'ff999';
+      ADOQuery1.open;
+      Label2.Caption:=inttostr(ADOQuery1.RecordCount);
+      ADOQuery1.first;
+      for j := 1 to 8 do
+        begin
+          max[j]:=ADOQuery1.fields[2+j].value;
+          min[j]:=ADOQuery1.fields[2+j].value;
+          total[j]:=ADOQuery1.fields[2+j].value;
+        end;
+      if ADOQuery1.RecordCount > 1 then
+        begin
+          for i := 2 to ADOQuery1.RecordCount do
+            begin
+              ADOQuery1.next;
+              for j := 1 to 8 do
+                begin
+                  if ADOQuery1.fields[2+j].value > max[j] then max[j]:= ADOQuery1.fields[2+j].value;        //找大小
+                  if ADOQuery1.fields[2+j].value < min[j] then min[j]:= ADOQuery1.fields[2+j].value;
+                  total[j]:=total[j]+ADOQuery1.fields[2+j].value;                                           //加總量
+                end
+            end;
+          for j := 1 to 8 do
+              r[j]:=max[j]-min[j];                                                             //求R值
+
+          for j := 1 to 8 do                                                                   //算平均
+              average[j]:=total[j]/ADOQuery1.RecordCount;
+                                                                                              //算標準差
+          ADOQuery1.first;
+          for j := 1 to 8 do
+              stdev[j]:=0;
+
+          for i := 1 to ADOQuery1.RecordCount do
+            begin
+              for j := 1 to 8 do
+                begin
+//                  if j= 1 then
+//                    begin
+//                      Memo1.Lines.Add(floattostr(ADOQuery1.fields[2+j].value));
+//                      Memo1.Lines.Add(floattostr((ADOQuery1.fields[2+j].value-average[j])));
+//                      Memo1.Lines.Add(floattostr(sqr(ADOQuery1.fields[2+j].value-average[j])));
+//                    end;
+                  stdev[j]:=stdev[j]+sqr(ADOQuery1.fields[2+j].value-average[j]);
+//                  stdev[j]:=stdev[j]+(ADOQuery1.fields[2+j].value-average[j])*(ADOQuery1.fields[2+j].value-average[j]);
+//                  stdev[j]:=stdev[j]+power((ADOQuery1.fields[2+j].value-average[j]), -2);
+                  ADOQuery1.next;
+                end
+            end;
+           for j := 1 to 8 do
+             stdev[j]:=sqrt(stdev[j]/(ADOQuery1.RecordCount-1));
+
+          Label8.caption:=floattoStr(max[1]);
+          Label9.caption:=floattoStr(min[1]);
+          Label10.caption:=floattoStr(total[1]/ADOQuery1.RecordCount);
+          Label11.caption:=floattoStr(max[2]);
+          Label12.caption:=floattoStr(min[2]);
+          Label13.caption:=floattoStr(total[2]/ADOQuery1.RecordCount);
+          Label14.caption:=floattoStr(max[3]);
+          Label15.caption:=floattoStr(min[3]);
+          Label16.caption:=floattoStr(total[3]/ADOQuery1.RecordCount);
+          Label17.caption:=floattoStr(max[4]);
+          Label18.caption:=floattoStr(min[4]);
+          Label19.caption:=floattoStr(total[4]/ADOQuery1.RecordCount);
+          Label20.caption:=floattoStr(max[5]);
+          Label21.caption:=floattoStr(min[5]);
+          Label22.caption:=floattoStr(total[5]/ADOQuery1.RecordCount);
+          Label23.caption:=floattoStr(max[6]);
+          Label24.caption:=floattoStr(min[6]);
+          Label25.caption:=floattoStr(total[6]/ADOQuery1.RecordCount);
+          Label26.caption:=floattoStr(max[7]);
+          Label27.caption:=floattoStr(min[7]);
+          Label28.caption:=floattoStr(total[7]/ADOQuery1.RecordCount);
+          Label29.caption:=floattoStr(max[8]);
+          Label30.caption:=floattoStr(min[8]);
+          Label31.caption:=floattoStr(total[8]/ADOQuery1.RecordCount);
+          Label32.caption:=floattoStr(r[1]);
+          Label33.caption:=floattoStr(r[2]);
+          Label34.caption:=floattoStr(r[3]);
+          Label35.caption:=floattoStr(r[4]);
+          Label36.caption:=floattoStr(r[5]);
+          Label37.caption:=floattoStr(r[6]);
+          Label38.caption:=floattoStr(r[7]);
+          Label39.caption:=floattoStr(r[8]);
+          Label41.Caption:='1';
+          Label42.caption:=floattoStr(stdev[1]);
+          Label43.caption:=floattoStr(stdev[2]);
+          Label44.caption:=floattoStr(stdev[3]);
+          Label45.caption:=floattoStr(stdev[4]);
+          Label46.caption:=floattoStr(stdev[5]);
+          Label47.caption:=floattoStr(stdev[6]);
+          Label48.caption:=floattoStr(stdev[7]);
+          Label49.caption:=floattoStr(stdev[8]);
+      end;
+    StringGrid1.Visible:=false;
+    show;
+  end;
+end;
+
+procedure TForm1.Button3Click(Sender: TObject);                // 從日期區間查模組清單及電測資料
+var
+  max,min,r,average,stdev,total:array[1..8] of real;
+  i,j,wocount:integer;
+  won:array[1..999] of integer;
+  wo:array[1..999] of string;
+begin
+  wocount:=1;
+  for i := 1 to 999 do
+    begin
+      won[i]:=1;
+    end;
+  with form2 do
+      begin
+{
+        ADOQuery1.close;
+        ADOQuery1.SQL.Clear;
+        ADOQuery1.SQL.add('select SerN');
+        ADOQuery1.sql.add('from Mes');
+        ADOQuery1.sql.add('where DtCr >:DtCr1 ');
+        ADOQuery1.sql.add('and DtCr <:DtCr2 ');
+        ADOQuery1.sql.add('and OK=1');
+        ADOQuery1.sql.add('order by SerN');
+        ADOQuery1.Parameters.parambyname('DtCr1').VALUE:= Edit3.text;
+        ADOQuery1.Parameters.parambyname('DtCr2').VALUE:= Edit4.text;
+        ADOQuery1.open;
+        ADOQuery1.first;
+
+        if ADOQuery1.RecordCount > 0 then
+          begin
+            if ADOQuery1.fields[0].value='' then  ADOQuery1.next;
+            ADOQuery4.close;
+            ADOQuery4.SQL.Clear;
+            ADOQuery4.SQL.add('select * from  MOCTT');
+            ADOQuery4.sql.add('where TT004>=:sn');
+            ADOQuery4.sql.add('and TT003<=:sn');
+            ADOQuery4.sql.add('order by TT003');
+            ADOQuery4.Parameters.ParamByName('sn').Value:= ADOQuery1.fields[0].value;
+            ADOQuery4.OPEN;
+            ADOQuery4.first;
+            if ADOQuery4.recordcount=0 then wo[1]:='999';
+            if ADOQuery4.recordcount>0 then wo[1]:=ADOQuery4.FieldByName('TT002').Value;                      //2011.01.26 序號變更
+            for i := 2 to ADOQuery1.RecordCount do
+              begin                                                                  //計算工單號及片數
+                ADOQuery1.next;
+
+                ADOQuery4.close;
+                ADOQuery4.SQL.Clear;
+                ADOQuery4.SQL.add('select * from  MOCTT');
+                ADOQuery4.sql.add('where TT004>=:sn');
+                ADOQuery4.sql.add('order by TT003');
+                ADOQuery4.Parameters.ParamByName('sn').Value:= ADOQuery1.fields[0].value;
+                ADOQuery4.OPEN;
+                ADOQuery4.first;
+                if ADOQuery4.recordcount=0 then wo[1]:='999';
+                if ADOQuery4.FieldByName('TT002').Value= wo[wocount]then
+                  begin
+                    won[wocount]:=won[wocount]+1;
+                  end;
+//                if copy(ADOQuery1.fields[0].asstring,1,11)<> wo[wocount]then
+                if ADOQuery4.FieldByName('TT002').Value<> wo[wocount]then
+                  begin
+                    wocount:=wocount+1;
+//                    wo[wocount]:=copy(ADOQuery1.fields[0].asstring,1,11);
+                    wo[wocount]:=ADOQuery4.FieldByName('TT002').Value;
+                  end;
+              end;
+            StringGrid1.RowCount:=wocount+1;
+            Label41.Caption:=inttostr(wocount);
+            StringGrid1.Cells[0,0]:='工單';
+            StringGrid1.Cells[1,0]:='count';
+            for i := 1 to wocount do
+              begin
+                StringGrid1.Cells[0,i]:=wo[i];
+                StringGrid1.Cells[1,i]:=inttostr(won[i]);                            //列出工單號及片數
+              end;
+          end;
+}
+        ADOQuery1.close;
+        ADOQuery1.SQL.Clear;
+//        ADOQuery1.SQL.add('select SFCSNTD.CN,SFCSNTD.SER,SFCSNTD.CSN,Mes.SerN,MesRes.RsMxp,MesRes.RsVoc,MesRes.RsIsc,MesRes.RsVpm,MesRes.RsIpm,MesRes.RsMxe,MesRes.RsRsr,MesRes.RsRsh,MesRes.RsEff');
+        ADOQuery1.SQL.add('select Mes.DtCr,MesCel.CelT,Mes.SerN,MesRes.RsMxp,MesRes.RsVoc,MesRes.RsIsc,MesRes.RsVpm,MesRes.RsIpm,MesRes.RsMxe,MesT.T4,MesRes.RsRsr,Mes.Id,MesRes.RsRsh,Mes.StId,MesCel.Dcel,MesRes.RsEff');
+        ADOQuery1.sql.add('from MesCel,Mes,MesRes,MesT');
+        ADOQuery1.sql.add('where Mes.DtCr >:DtCr1 ');
+        ADOQuery1.sql.add('and Mes.DtCr <:DtCr2 ');
+        ADOQuery1.sql.add('and Mes.Id=MesRes.Id');
+        ADOQuery1.sql.add('and Mes.CelId=MesCel.Id');
+        ADOQuery1.sql.add('and MesT.MesId=Mes.Id');
+        if CheckBox1.Checked=true then ADOQuery1.sql.add('and Mes.OK=1');
+        ADOQuery1.sql.add('and Mes.StId=MesT.StId');           //2010.4.16 增加 simulator Id
+        ADOQuery1.sql.add('and Mes.StId=MesRes.StId');         //2010.4.16 增加 simulator Id
+        ADOQuery1.sql.add('and Mes.StId=MesCel.StId');         //2010.4.16 增加 simulator Id
+        if ComboBox1.ItemIndex= 0 then ADOQuery1.sql.add('order by Mes.SerN');
+        if ComboBox1.ItemIndex= 1 then ADOQuery1.sql.add('order by Mes.DtCr');
+        if ComboBox1.ItemIndex= 2 then ADOQuery1.sql.add('order by MesRes.RsMxp');
+        ADOQuery1.Parameters.parambyname('DtCr1').value:= Edit3.text;
+        ADOQuery1.Parameters.parambyname('DtCr2').value:= Edit4.text;
+        ADOQuery1.open;
+        Label2.Caption:=inttostr(ADOQuery1.RecordCount);
+        ADOQuery1.first;
+        if ADOQuery1.RecordCount > 0 then
+          begin
+            for j := 1 to 8 do
+              begin
+                max[j]:=ADOQuery1.fields[2+j].value;
+                min[j]:=ADOQuery1.fields[2+j].value;
+                total[j]:=ADOQuery1.fields[2+j].value;
+              end;
+            for i := 2 to ADOQuery1.RecordCount do
+              begin
+                ADOQuery1.next;
+                for j := 1 to 8 do
+                  begin
+                    if ADOQuery1.fields[2+j].value > max[j] then max[j]:= ADOQuery1.fields[2+j].value;
+                    if ADOQuery1.fields[2+j].value < min[j] then min[j]:= ADOQuery1.fields[2+j].value;
+                    total[j]:=total[j]+ADOQuery1.fields[2+j].value;
+                 end
+              end;
+            for j := 1 to 8 do
+              begin
+                r[j]:=max[j]-min[j];
+              end;
+            Label8.caption:=floattoStr(max[1]);
+            Label9.caption:=floattoStr(min[1]);
+            Label10.caption:=floattoStr(total[1]/ADOQuery1.RecordCount);
+            Label11.caption:=floattoStr(max[2]);
+            Label12.caption:=floattoStr(min[2]);
+            Label13.caption:=floattoStr(total[2]/ADOQuery1.RecordCount);
+            Label14.caption:=floattoStr(max[3]);
+            Label15.caption:=floattoStr(min[3]);
+            Label16.caption:=floattoStr(total[3]/ADOQuery1.RecordCount);
+            Label17.caption:=floattoStr(max[4]);
+            Label18.caption:=floattoStr(min[4]);
+            Label19.caption:=floattoStr(total[4]/ADOQuery1.RecordCount);
+            Label20.caption:=floattoStr(max[5]);
+            Label21.caption:=floattoStr(min[5]);
+            Label22.caption:=floattoStr(total[5]/ADOQuery1.RecordCount);
+            Label23.caption:=floattoStr(max[6]);
+            Label24.caption:=floattoStr(min[6]);
+            Label25.caption:=floattoStr(total[6]/ADOQuery1.RecordCount);
+            Label26.caption:=floattoStr(max[7]);
+            Label27.caption:=floattoStr(min[7]);
+            Label28.caption:=floattoStr(total[7]/ADOQuery1.RecordCount);
+            Label29.caption:=floattoStr(max[8]);
+            Label30.caption:=floattoStr(min[8]);
+            Label31.caption:=floattoStr(total[8]/ADOQuery1.RecordCount);
+            Label32.caption:=floattoStr(r[1]);
+            Label33.caption:=floattoStr(r[2]);
+            Label34.caption:=floattoStr(r[3]);
+            Label35.caption:=floattoStr(r[4]);
+            Label36.caption:=floattoStr(r[5]);
+            Label37.caption:=floattoStr(r[6]);
+            Label38.caption:=floattoStr(r[7]);
+            Label39.caption:=floattoStr(r[8]);
+          end;
+//        StringGrid1.Visible:=true;
+        show;
+      end
+end;
+
+procedure TForm1.Button4Click(Sender: TObject);        // 從日期區間直接產生電測報告
+var
+  s,srn:string;
+  i,k,id:integer;
+begin
+  with QR3 do
+    begin
+      ADOQuery3.Connection:=Form1.ADOConnection1;
+      ADOQuery3.close;
+      ADOQuery3.SQL.Clear;
+      ADOQuery3.SQL.add('select MesCel.CelT,Mes.SerN,Mes.DtCr,MesRes.RsIsc,MesRes.RsVoc,MesRes.RsMxp,MesRes.RsVpm,MesRes.RsIpm,Mes.Id,Mes.StId');
+      ADOQuery3.sql.add('from MesCel,Mes,MesRes');
+      ADOQuery3.sql.add('where Mes.DtCr >:DtCr1 ');
+      ADOQuery3.sql.add('and Mes.DtCr <:DtCr2 ');
+      ADOQuery3.sql.add('and Mes.Id=MesRes.Id');
+      ADOQuery3.sql.add('and Mes.CelId=MesCel.Id');
+      ADOQuery3.sql.add('and Mes.OK=1');
+      ADOQuery3.sql.add('and Mes.StId=MesRes.StId');     //2010.4.16 增加 simulator Id
+      ADOQuery3.sql.add('and Mes.StId=MesCel.StId');     //2010.4.16 增加 simulator Id
+      ADOQuery3.sql.add('order by Mes.SerN');
+      ADOQuery3.Parameters.parambyname('DtCr1').value:= Edit3.text;
+      ADOQuery3.Parameters.parambyname('DtCr2').value:= Edit4.text;
+      ADOQuery3.open;
+      Preview;
+    end;
+end;
+
+procedure TForm1.FormShow(Sender: TObject);
+var
+  s,s1:string;
+begin
+  s:=datetostr(now);
+//  s:='2010.10.13';
+  Edit3.Text:=s+' 08:30:00';
+  Edit4.Text:=s+' 20:30:00';
+
+  ADOQuery1.close;                             // 秀出SQL資料庫最新紀錄的時間
+  ADOQuery1.SQL.Clear;
+  ADOQuery1.SQL.add('select DtCr,SerN');
+  ADOQuery1.sql.add('from Mes');
+  ADOQuery1.sql.add('Where DtCr>:s1');
+  ADOQuery1.sql.add('order by DtCr');
+//  ADOQuery1.Parameters.parambyname('s1').VALUE:= '2011/02/01 00:00:00';
+//  ADOQuery1.Parameters.parambyname('s1').VALUE:= '2012/12/18 00:00:00';           //2012.10.25  改善程式啟動速度
+  ADOQuery1.Parameters.parambyname('s1').VALUE:= '2013/06/01 00:00:00';           //2013.06.01  改善程式啟動速度
+  ADOQuery1.open;
+  ADOQuery1.last;
+  Label7.Caption:=ADOQuery1.Fields[0].asstring;
+
+end;
+
+
+procedure TForm1.Button1Click(Sender: TObject);       // 從工單號直接產生電測報告
+var
+  s,srn:string;
+  i,k,id:integer;
+begin
+  with QR3 do
+    begin
+      srn:=Edit2.text;
+      ADOQuery3.Connection:=Form1.ADOConnection1;
+      ADOQuery3.close;
+      ADOQuery3.SQL.Clear;
+      ADOQuery3.SQL.add('select MesCel.CelT,Mes.SerN,Mes.DtCr,MesRes.RsIsc,MesRes.RsVoc,MesRes.RsMxp,MesRes.RsVpm,MesRes.RsIpm,Mes.Id,Mes.StId');
+      ADOQuery3.sql.add('from MesCel,Mes,MesRes');
+      ADOQuery3.sql.add('where Mes.SerN >:srn1 ');
+      ADOQuery3.sql.add('and Mes.SerN <:srn2 ');
+      ADOQuery3.sql.add('and Mes.Id=MesRes.Id');
+      ADOQuery3.sql.add('and Mes.CelId=MesCel.Id');
+      ADOQuery3.sql.add('and Mes.OK=1');
+      ADOQuery3.sql.add('and Mes.StId=MesRes.StId');          //2010.4.16 增加 simulator Id
+      ADOQuery3.sql.add('and Mes.StId=MesCel.StId');          //2010.4.16 增加 simulator Id
+      ADOQuery3.sql.add('order by Mes.SerN');
+      ADOQuery3.Parameters.parambyname('srn1').VALUE:= 'W'+srn+'.....';
+      ADOQuery3.Parameters.parambyname('srn2').VALUE:= 'W'+srn+'zzzzz';
+      ADOQuery3.open;
+      Preview;
+    end;
+end;
+
+procedure TForm1.Button5Click(Sender: TObject);               // 從箱號查模組清單及電測資料
+begin
+  with form2 do
+      begin
+        ADOQuery1.close;
+        ADOQuery1.SQL.Clear;
+        ADOQuery1.SQL.add('select Mes.DtCr,MesCel.CelT,Mes.SerN,MesRes.RsMxp,MesRes.RsVoc,MesRes.RsIsc,MesRes.RsVpm,MesRes.RsIpm,MesRes.RsMxe,MesT.T4,MesRes.RsRsr,Mes.Id,MesRes.RsRsh,Mes.StId,MesCel.Dcel,MesRes.RsEff,SFCSNTD.CSN');
+        ADOQuery1.sql.add('from MesCel,Mes,MesRes,MesT,SFCSNTD');                                                                                                                                                       // 2011.01.18 增加客戶序號
+        ADOQuery1.sql.add('where SFCSNTD.CN =:cn1 ');
+        ADOQuery1.sql.add('and Mes.SerN = SFCSNTD.SN ');
+        ADOQuery1.sql.add('and Mes.Id=MesRes.Id');
+        ADOQuery1.sql.add('and Mes.CelId=MesCel.Id');
+        ADOQuery1.sql.add('and MesT.MesId=Mes.Id');
+        ADOQuery1.sql.add('and Mes.OK=1');
+        ADOQuery1.sql.add('and Mes.StId=MesT.StId');         //2010.4.16 增加 simulator Id
+        ADOQuery1.sql.add('and Mes.StId=MesRes.StId');       //2010.4.16 增加 simulator Id
+        ADOQuery1.sql.add('and Mes.StId=MesCel.StId');       //2010.4.16 增加 simulator Id
+        ADOQuery1.sql.add('and SFCSNTD.OK=1');
+        ADOQuery1.sql.add('order by SFCSNTD.SER');
+        ADOQuery1.Parameters.parambyname('cn1').value:= Edit1.text;
+        ADOQuery1.open;
+        Label2.Caption:=inttostr(ADOQuery1.RecordCount);
+        show;
+      end
+end;
+
+procedure TForm1.Button6Click(Sender: TObject);                                   // 從箱號直接產生電測報告
+var
+  s,srn:string;
+  i,k,id:integer;
+begin
+  with QR3 do
+    begin
+      ADOQuery3.Connection:=Form1.ADOConnection1;
+      ADOQuery3.close;
+      ADOQuery3.SQL.Clear;
+      ADOQuery3.SQL.add('select MesCel.CelT,Mes.SerN,Mes.DtCr,MesRes.RsIsc,MesRes.RsVoc,MesRes.RsMxp,MesRes.RsVpm,MesRes.RsIpm,Mes.Id,Mes.StId,SFCSNTD.SER');
+      ADOQuery3.sql.add('from MesCel,Mes,MesRes,SFCSNTD');
+      ADOQuery3.sql.add('where SFCSNTD.CN =:cn1 ');
+      ADOQuery3.sql.add('and Mes.SerN = SFCSNTD.SN ');
+      ADOQuery3.sql.add('and Mes.Id=MesRes.Id');
+      ADOQuery3.sql.add('and Mes.CelId=MesCel.Id');
+      ADOQuery3.sql.add('and Mes.OK=1');
+      ADOQuery3.sql.add('and Mes.StId=MesRes.StId');       //2010.4.16 增加 simulator Id
+      ADOQuery3.sql.add('and Mes.StId=MesCel.StId');       //2010.4.16 增加 simulator Id
+      ADOQuery3.sql.add('and SFCSNTD.OK=1');
+      ADOQuery3.sql.add('order by SFCSNTD.SER');
+      ADOQuery3.Parameters.parambyname('cn1').value:= Edit1.text;
+      ADOQuery3.open;
+      Preview;
+    end;
+end;
+
+procedure TForm1.Button7Click(Sender: TObject);                                     //箱號區間連續匯出  2011.01.19  kioto
+VAR
+  asheet:variant;
+  i,j,k:INTEGER;
+begin
+  ADOQuery1.close;
+  ADOQuery1.SQL.Clear;
+  ADOQuery1.SQL.add('select SFCSNTD.CN,SFCSNTD.SER,SFCSNTD.CSN,SFCSNTD.SN,MesRes.RsMxp,MesRes.RsVoc,MesRes.RsIsc,MesRes.RsVpm,MesRes.RsIpm,MesRes.RsMxe,MesRes.RsRsr,MesRes.RsRsh,MesRes.RsEff');
+  ADOQuery1.sql.add('from Mes,MesRes,SFCSNTD');
+  ADOQuery1.sql.add('where SFCSNTD.CN>=:cn1 ');
+  ADOQuery1.sql.add('and SFCSNTD.CN<=:cn2 ');
+  ADOQuery1.sql.add('and Mes.SerN = SFCSNTD.SN ');
+  ADOQuery1.sql.add('and Mes.Id=MesRes.Id');
+  ADOQuery1.sql.add('and Mes.OK=1');
+  ADOQuery1.sql.add('and Mes.StId=MesRes.StId');       //2010.4.16 增加 simulator Id
+  ADOQuery1.sql.add('and SFCSNTD.OK=1');
+  ADOQuery1.sql.add('order by SFCSNTD.CN,SFCSNTD.SER');
+  ADOQuery1.Parameters.parambyname('cn1').value:= Edit5.text;
+  ADOQuery1.Parameters.parambyname('cn2').value:= Edit6.text;
+  ADOQuery1.open;
+  ADOQuery1.First;
+
+  ExcelApplication1.Visible[0]:=true;
+  ExcelApplication1.Workbooks.Add(xlwbatworksheet,0);
+  asheet:= ExcelApplication1.Worksheets.Item[1];
+
+  k:=2;
+
+  FOR i := 1 to ADOQuery1.RecordCount do
+    begin
+      if ADOQuery1.Fields[1].Value=1 then
+        begin
+          asheet.cells[k,9].value:='CARTON NO.:'+ADOQuery1.Fields[0].Value;
+          k:=k+1;
+          asheet.cells[k,1].value:='NO.';
+          asheet.cells[k,2].value:=' S/N 1';
+          asheet.cells[k,3].value:=' S/N';
+          asheet.cells[k,4].value:='Power (W)';
+          asheet.cells[k,5].value:='Voc';
+          asheet.cells[k,6].value:='Isc';
+          asheet.cells[k,7].value:='Vmp';
+          asheet.cells[k,8].value:='Imp';
+          asheet.cells[k,9].value:='Dimension';
+          asheet.cells[k,10].value:='Cosmetic';
+          asheet.cells[k,11].value:='Judgement';
+          k:=k+1;
+        end;
+      for j := 1 to 8  do
+        begin
+          asheet.cells[k,j].value:=ADOQuery1.Fields[j].Value;
+        end;
+      for j := 9 to 11  do
+        begin
+          asheet.cells[k,j].value:='OK';
+        end;
+       k:=k+1;
+       if ADOQuery1.Fields[1].Value=30 then
+         begin
+           asheet.cells[k,2].value:='Total Power (W)';
+           k:=k+1;
+           asheet.cells[k,2].value:='Average Power (W)';
+           k:=k+1;
+           asheet.cells[k,2].value:='Approved by ：Susan';
+           asheet.cells[k,5].value:='Checked by ：Liao';
+           asheet.cells[k,9].value:='Reported by ：Ricy';
+           k:=k+1;
+         end;
+      ADOQuery1.Next;
+    end;
+end;
+
+procedure TForm1.Button8Click(Sender: TObject);                                    //2011.01.27  箱號區間連續匯出  winaico
+VAR
+  asheet:variant;
+  i,j,k:INTEGER;
+begin
+  ADOQuery1.close;
+  ADOQuery1.SQL.Clear;
+  ADOQuery1.SQL.add('select SFCSNTD.CN,SFCSNTD.SER,SFCSNTD.CSN,SFCSNTD.SN,MesRes.RsMxp,MesRes.RsVoc,MesRes.RsIsc,MesRes.RsVpm,MesRes.RsIpm,MesRes.RsRsr,MesRes.RsRsh,MesRes.RsEff,MesRes.RsMxe');
+  ADOQuery1.sql.add('from Mes,MesRes,SFCSNTD');
+  ADOQuery1.sql.add('where SFCSNTD.CN>=:cn1 ');
+  ADOQuery1.sql.add('and SFCSNTD.CN<=:cn2 ');
+  ADOQuery1.sql.add('and Mes.SerN = SFCSNTD.SN ');
+  ADOQuery1.sql.add('and Mes.Id=MesRes.Id');
+  ADOQuery1.sql.add('and Mes.OK=1');
+  ADOQuery1.sql.add('and Mes.StId=MesRes.StId');       //2010.4.16 增加 simulator Id
+  ADOQuery1.sql.add('and SFCSNTD.OK=1');
+  ADOQuery1.sql.add('order by SFCSNTD.CN,SFCSNTD.SER');
+  ADOQuery1.Parameters.parambyname('cn1').value:= Edit5.text;
+  ADOQuery1.Parameters.parambyname('cn2').value:= Edit6.text;
+  ADOQuery1.open;
+  ADOQuery1.First;
+
+  ExcelApplication1.Visible[0]:=true;
+  ExcelApplication1.Workbooks.Add(xlwbatworksheet,0);
+  asheet:= ExcelApplication1.Worksheets.Item[1];
+
+  k:=2;
+
+  FOR i := 1 to ADOQuery1.RecordCount do
+    begin
+      if ADOQuery1.Fields[1].Value=1 then
+        begin
+          asheet.cells[k,9].value:='CARTON NO.:'+ADOQuery1.Fields[0].Value;
+          k:=k+1;
+          asheet.cells[k,1].value:='NO.';
+          asheet.cells[k,2].value:=' S/N 1';
+          asheet.cells[k,3].value:='WSP S/N';
+          asheet.cells[k,4].value:='Power (W)';
+          asheet.cells[k,5].value:='Voc';
+          asheet.cells[k,6].value:='Isc';
+          asheet.cells[k,7].value:='Vmp';
+          asheet.cells[k,8].value:='Imp';
+          asheet.cells[k,9].value:='Rs';
+          asheet.cells[k,10].value:='Rsh';
+          asheet.cells[k,11].value:='Fill Factor';
+          k:=k+1;
+        end;
+      for j := 1 to 11  do
+        begin
+          asheet.cells[k,j].value:=ADOQuery1.Fields[j].Value;
+        end;
+       k:=k+1;
+       if ADOQuery1.Fields[1].Value=24 then
+         begin
+           asheet.cells[k,2].value:='Total Power (W)';
+           k:=k+1;
+           asheet.cells[k,2].value:='Average Power (W)';
+           k:=k+1;
+//           asheet.cells[k,2].value:='Approved by ：Susan';
+//           asheet.cells[k,5].value:='Checked by ：Liao';
+//           asheet.cells[k,9].value:='Reported by ：Ricy';
+//           k:=k+1;
+         end;
+      ADOQuery1.Next;
+    end;
+
+end;
+
+procedure TForm1.Button9Click(Sender: TObject);
+var
+  jpg: TJPEGImage;
+  blobF : TBlobField;
+  MS : TmemoryStream;
+  s1:string;
+begin
+  ADOQuery2.close;
+  ADOQuery2.SQL.Clear;
+  ADOQuery2.SQL.add('select TG001, TG002, TG003, TG004, TG005, OK');
+  ADOQuery2.sql.add('from SFCSNTG');
+  ADOQuery2.sql.add('where  TG001=:TG001');
+  ADOQuery2.sql.add('and OK=:OK');
+  ADOQuery2.Parameters.ParamByName('TG001').Value:= Edit8.Text;
+  ADOQuery2.Parameters.ParamByName('OK').Value:=1;
+  ADOQuery2.OPEN;
+  s1:=Edit8.Text+'.jpg';
+
+  MS:= TMemoryStream.Create;
+  TBlobField(ADOQuery2.FieldByName('TG003')).SaveToStream(MS);
+  MS.Position:=0;
+  jpg := TJPEGImage.Create;
+  jpg.LoadFromStream(ms);
+  Image1.Picture.Assign(jpg);
+//  Jpg.SaveToFile(s1);
+
+end;
+procedure TForm1.Button10Click(Sender: TObject);
+var
+  jpg: TJPEGImage;
+  blobF : TBlobField;
+  MS : TmemoryStream;
+  s1,S2:string;
+  i:integer;
+begin
+  ADOQuery1.close;
+  ADOQuery1.SQL.Clear;
+  ADOQuery1.SQL.add('select SN, CN, CSN, SER, OK');
+  ADOQuery1.sql.add('from SFCSNTD');
+  ADOQuery1.sql.add('where CN=:cn1 ');
+  ADOQuery1.sql.add('and SFCSNTD.OK=1');
+  ADOQuery1.sql.add('order by SER');
+  ADOQuery1.Parameters.parambyname('cn1').value:= Edit1.text;
+  ADOQuery1.open;
+
+  s1:='d:\'+ copy(Edit1.text,1,10);
+  CreateDir(s1);
+
+  IF ADOQuery1.RECORDCOUNT>0 THEN
+    BEGIN
+      for i := 1 to ADOQuery1.RECORDCOUNT do
+        begin
+          Edit8.text:=ADOQuery1.fieldbyname('SN').value;
+          ADOQuery2.close;
+          ADOQuery2.SQL.Clear;
+          ADOQuery2.SQL.add('select TG001, TG002, TG003, TG004, TG005, OK');
+          ADOQuery2.sql.add('from SFCSNTG');
+          ADOQuery2.sql.add('where  TG001=:TG001');
+          ADOQuery2.sql.add('and OK=:OK');
+          ADOQuery2.Parameters.ParamByName('TG001').Value:= ADOQuery1.fieldbyname('SN').value;
+          ADOQuery2.Parameters.ParamByName('OK').Value:=1;
+          ADOQuery2.OPEN;
+          s2:=s1+'\'+ADOQuery1.fieldbyname('SN').value+'.jpg';
+          if ADOQuery2.recordcount>0 then
+            begin
+              MS:= TMemoryStream.Create;
+              TBlobField(ADOQuery2.FieldByName('TG003')).SaveToStream(MS);
+              MS.Position:=0;
+              jpg := TJPEGImage.Create;
+              jpg.LoadFromStream(ms);
+              Image1.Picture.Assign(jpg);
+              Jpg.SaveToFile(s2);
+            end;  
+
+          ADOQuery1.next;
+        end;
+    END;
+end;
+
+procedure TForm1.Button11Click(Sender: TObject);
+var
+  i:integer;
+begin
+  ADOQuery3.close;
+  ADOQuery3.SQL.Clear;
+  ADOQuery3.SQL.add('select CN');
+  ADOQuery3.sql.add('from SFCSNTE');
+  ADOQuery3.sql.add('where CN>=:cn1 ');
+  ADOQuery3.sql.add('and CN<=:cn2 ');
+  ADOQuery3.sql.add('order by CN');
+  ADOQuery3.Parameters.parambyname('cn1').value:= Edit5.text;
+  ADOQuery3.Parameters.parambyname('cn2').value:= Edit6.text;
+  ADOQuery3.open;
+  ADOQuery3.First;
+  IF ADOQuery3.RECORDCOUNT>0 THEN
+    BEGIN
+      for i := 1 to ADOQuery3.RECORDCOUNT do
+        begin
+          Edit1.text:= ADOQuery3.fieldbyname('CN').value;
+          Button10.Click;
+          ADOQuery3.next;
+        end;
+    end;
+end;
+
+procedure TForm1.Button12Click(Sender: TObject);                                  //2011.02.08  箱號區間連續匯出
+VAR
+  asheet:variant;
+  i,j,k:INTEGER;
+begin
+  ADOQuery1.close;
+  ADOQuery1.SQL.Clear;
+  ADOQuery1.SQL.add('select SFCSNTD.CN,SFCSNTD.SER,Mes.DtCr,SFCSNTD.SN,MesRes.RsMxp,MesRes.RsVoc,MesRes.RsIsc,MesRes.RsVpm,MesRes.RsIpm,MesRes.RsMxe,MesRes.RsRsr,MesRes.RsRsh,MesRes.RsEff');
+  ADOQuery1.sql.add('from Mes,MesRes,SFCSNTD');                                   //2011 .12.14 增加 Mes.DtCr
+  ADOQuery1.sql.add('where SFCSNTD.CN>=:cn1 ');
+  ADOQuery1.sql.add('and SFCSNTD.CN<=:cn2 ');
+  ADOQuery1.sql.add('and Mes.SerN = SFCSNTD.SN ');
+  ADOQuery1.sql.add('and Mes.Id=MesRes.Id');
+  ADOQuery1.sql.add('and Mes.OK=1');
+  ADOQuery1.sql.add('and Mes.StId=MesRes.StId');       //2010.4.16 增加 simulator Id
+  ADOQuery1.sql.add('and SFCSNTD.OK=1');
+  ADOQuery1.sql.add('order by SFCSNTD.CN,SFCSNTD.SER');
+  ADOQuery1.Parameters.parambyname('cn1').value:= Edit5.text;
+  ADOQuery1.Parameters.parambyname('cn2').value:= Edit6.text;
+  ADOQuery1.open;
+  ADOQuery1.First;
+
+  ExcelApplication1.Visible[0]:=true;
+  ExcelApplication1.Workbooks.Add(xlwbatworksheet,0);
+  asheet:= ExcelApplication1.Worksheets.Item[1];
+
+  k:=2;
+
+  FOR i := 1 to ADOQuery1.RecordCount do
+    begin
+      if ADOQuery1.Fields[1].Value=1 then
+        begin
+          k:=k+2;
+          asheet.cells[k,6].value:='CARTON NO.:'+ADOQuery1.Fields[0].Value;
+          k:=k+1;
+          asheet.cells[k,1].value:='NO.';
+          asheet.cells[k,2].value:='DATE';                                       //2011 .12.14 增加 date
+          {
+          asheet.cells[k,2].value:='S/N';
+          asheet.cells[k,3].value:='Power (W)';
+          asheet.cells[k,4].value:='Voc';
+          asheet.cells[k,5].value:='Isc';
+          asheet.cells[k,6].value:='Vmp';
+          asheet.cells[k,7].value:='Imp';
+          asheet.cells[k,8].value:='Judgement';
+          }
+          asheet.cells[k,3].value:='S/N';
+          asheet.cells[k,4].value:='Power (W)';
+          asheet.cells[k,5].value:='Voc';
+          asheet.cells[k,6].value:='Isc';
+          asheet.cells[k,7].value:='Vmp';
+          asheet.cells[k,8].value:='Imp';
+          asheet.cells[k,9].value:='Judgement';
+          k:=k+1;
+        end;
+      for j := 3 to 8  do
+        begin
+          asheet.cells[k,j].value:=ADOQuery1.Fields[j].Value;
+        end;
+      asheet.cells[k,1].value:=ADOQuery1.Fields[1].Value;
+      asheet.cells[k,2].value:=copy(ADOQuery1.Fields[2].Value,1,10);             //2011 .12.14 增加 date
+      asheet.cells[k,9].value:='OK';
+      k:=k+1;
+      ADOQuery1.Next;
+    end;
+
+end;
+
+procedure TForm1.Button13Click(Sender: TObject);
+VAR
+  asheet:variant;
+  i,j,k:INTEGER;
+begin
+  ADOQuery1.close;
+  ADOQuery1.SQL.Clear;
+//  ADOQuery1.SQL.add('select SFCSNTD.CN,SFCSNTD.SER,SFCSNTD.SN,SFCSNTD.CSN,MesRes.RsMxp,MesRes.RsVoc,MesRes.RsIsc,MesRes.RsVpm,MesRes.RsIpm,MesRes.RsEff,MesT.T4,MesRes.RsRsh,MesRes.RsRsr,MesRes.RsMxe,Mes.DtCr,Mes.StId,MesRes.Irm,SFCSNTE.PN,SFCSNTE.MN,SFCSNTI.R1');
+//  ADOQuery1.sql.add('from Mes,MesRes,MesT,SFCSNTD,SFCSNTE,SFCSNTI');
+  ADOQuery1.SQL.add('select SFCSNTD.CN,SFCSNTD.SER,SFCSNTD.SN,SFCSNTD.CSN,MesRes.RsMxp,MesRes.RsVoc,MesRes.RsIsc,MesRes.RsVpm,MesRes.RsIpm,MesRes.RsEff,MesT.T4,MesRes.RsRsh,MesRes.RsRsr,MesRes.RsMxe,Mes.DtCr,Mes.StId,MesRes.Irm,SFCSNTE.PN,SFCSNTE.MN');
+  ADOQuery1.sql.add('from Mes,MesRes,MesT,SFCSNTD,SFCSNTE');
+  ADOQuery1.sql.add('where SFCSNTD.CN>=:cn1 ');
+  ADOQuery1.sql.add('and SFCSNTD.CN<=:cn2 ');
+  ADOQuery1.sql.add('and Mes.SerN = SFCSNTD.SN ');
+//  ADOQuery1.sql.add('and Mes.SerN = SFCSNTI.SN ');
+  ADOQuery1.sql.add('and Mes.Id=MesRes.Id');
+  ADOQuery1.sql.add('and MesT.MesId=Mes.Id');
+  ADOQuery1.sql.add('and SFCSNTD.CN=SFCSNTE.CN');
+  ADOQuery1.sql.add('and Mes.OK=1');
+  ADOQuery1.sql.add('and Mes.StId=MesRes.StId');       //2010.4.16 增加 simulator Id
+  ADOQuery1.sql.add('and Mes.StId=MesT.StId');
+  ADOQuery1.sql.add('and SFCSNTD.OK=1');
+  ADOQuery1.sql.add('order by SFCSNTD.CN,SFCSNTD.SER');
+  ADOQuery1.Parameters.parambyname('cn1').value:= Edit5.text;
+  ADOQuery1.Parameters.parambyname('cn2').value:= Edit6.text;
+  ADOQuery1.open;
+  ADOQuery1.First;
+
+  ExcelApplication1.Visible[0]:=true;
+  ExcelApplication1.Workbooks.Add(xlwbatworksheet,0);
+//  ExcelApplication1.Worksheets.Add(emptyparam,emptyparam,emptyparam,emptyparam,1);
+  asheet:= ExcelApplication1.Worksheets.Item[1];
+
+
+  k:=1;
+  asheet.cells[k,1].value:='Flash report';
+  k:=k+1;
+  asheet.cells[k,1].value:='Ship to:';
+  k:=k+1;
+  asheet.cells[k,1].value:='Module type:';
+  k:=k+1;
+  asheet.cells[k,1].value:='PO number:';
+  k:=k+1;
+  asheet.cells[k,1].value:='Quantity:';
+  k:=k+1;
+  asheet.cells[k,1].value:='Average Power output:';
+  k:=k+1;
+  asheet.cells[k,1].value:='Power range:';
+  k:=k+1;
+
+  asheet.cells[k,1].value:='Order No.';
+  asheet.cells[k,2].value:='Shipment Ref No.';
+  asheet.cells[k,3].value:='Shipment date';
+  asheet.cells[k,4].value:='Pallet No';
+  asheet.cells[k,5].value:='Container';
+  asheet.cells[k,6].value:='Ship To';
+  asheet.cells[k,7].value:='Invoice no';
+  asheet.cells[k,8].value:='Serial_Number';
+  asheet.cells[k,9].value:='Model';
+  asheet.cells[k,10].value:='Module Part No';
+  asheet.cells[k,11].value:='TravelCard';
+  asheet.cells[k,12].value:='Tester Operator';
+  asheet.cells[k,13].value:='Production_Date';
+  asheet.cells[k,14].value:='Production_Line';
+  asheet.cells[k,15].value:='Lamination_Date';
+  asheet.cells[k,16].value:='Laminator';
+  asheet.cells[k,17].value:='CELL EFF';
+  asheet.cells[k,18].value:='cell lot #';
+  asheet.cells[k,19].value:='EVA1';
+  asheet.cells[k,20].value:='EVA2';
+  asheet.cells[k,21].value:='EVA1 Supplier';
+  asheet.cells[k,22].value:='EVA2 Supplier';
+  asheet.cells[k,23].value:='Backsheet Part#';
+  asheet.cells[k,24].value:='Backsheet Supplier';
+  asheet.cells[k,25].value:='Cell production date';
+  asheet.cells[k,26].value:='TestDate';
+  asheet.cells[k,27].value:='Test Time';
+  asheet.cells[k,28].value:='TEMP';
+  asheet.cells[k,29].value:='Pmpp';
+  asheet.cells[k,30].value:='Production Class';
+  asheet.cells[k,31].value:='Voc';
+  asheet.cells[k,32].value:='Isc';
+  asheet.cells[k,33].value:='Vmp';
+  asheet.cells[k,34].value:='Imp';
+  asheet.cells[k,35].value:='Rsh';
+  asheet.cells[k,36].value:='Rs';
+  asheet.cells[k,37].value:='FF';
+  asheet.cells[k,38].value:='Eff';
+  asheet.cells[k,39].value:='Irradiance';
+  asheet.cells[k,40].value:='Tester';
+  asheet.cells[k,41].value:='Cell power';
+  asheet.cells[k,42].value:='Material info';
+  asheet.cells[k,43].value:='Glass';
+  asheet.cells[k,44].value:='Cell_Origin';
+  asheet.cells[k,45].value:='Cell_Type';
+  asheet.cells[k,46].value:='ETL Control Number';
+  k:=k+1;
+
+  FOR i := 1 to ADOQuery1.RecordCount do
+    begin
+//      asheet.cells[k,1].value:='Order No.';
+//      asheet.cells[k,2].value:='Shipment Ref No.';
+//      asheet.cells[k,3].value:='Shipment date';
+      asheet.cells[k,4].value:=ADOQuery1.Fieldbyname('CN').Value;
+//      asheet.cells[k,5].value:='Container';
+//      asheet.cells[k,6].value:='Ship To';
+//      asheet.cells[k,7].value:='Invoice no';
+      asheet.cells[k,8].value:=ADOQuery1.Fieldbyname('SN').Value;
+//      asheet.cells[k,9].value:=ADOQuery1.Fieldbyname('MN').Value;
+//      asheet.cells[k,10].value:=ADOQuery1.Fieldbyname('PN').Value;
+//      asheet.cells[k,11].value:='TravelCard';
+//      asheet.cells[k,12].value:='Tester Operator';
+//      asheet.cells[k,13].value:='Production_Date';
+      asheet.cells[k,14].value:=ADOQuery1.Fieldbyname('StId').Value;
+//      asheet.cells[k,15].value:='Lamination_Date';
+//      asheet.cells[k,16].value:='Laminator';
+//      asheet.cells[k,17].value:='CELL EFF';
+//      asheet.cells[k,18].value:='cell lot #';
+//      asheet.cells[k,19].value:='EVA1';
+//      asheet.cells[k,20].value:='EVA2';
+//      asheet.cells[k,21].value:='EVA1 Supplier';
+//      asheet.cells[k,22].value:='EVA2 Supplier';
+//      asheet.cells[k,23].value:='Backsheet Part#';
+//      asheet.cells[k,24].value:='Backsheet Supplier';
+//      asheet.cells[k,25].value:='Cell production date';
+      asheet.cells[k,26].value:=copy(ADOQuery1.Fieldbyname('DtCr').Value,1,10);
+      asheet.cells[k,27].value:=copy(ADOQuery1.Fieldbyname('DtCr').Value,12,8);
+      asheet.cells[k,28].value:=ADOQuery1.Fieldbyname('T4').Value;
+      asheet.cells[k,29].value:=ADOQuery1.Fieldbyname('RsMxp').Value;
+      asheet.cells[k,30].value:='Class A';
+      asheet.cells[k,31].value:=ADOQuery1.Fieldbyname('RsVoc').Value;
+      asheet.cells[k,32].value:=ADOQuery1.Fieldbyname('RsIsc').Value;
+      asheet.cells[k,33].value:=ADOQuery1.Fieldbyname('RsVpm').Value;
+      asheet.cells[k,34].value:=ADOQuery1.Fieldbyname('RsIpm').Value;
+      asheet.cells[k,35].value:=ADOQuery1.Fieldbyname('RsRsh').Value;
+      asheet.cells[k,36].value:=ADOQuery1.Fieldbyname('RsRsr').Value;
+      asheet.cells[k,37].value:=ADOQuery1.Fieldbyname('RsEff').Value;
+      asheet.cells[k,38].value:=ADOQuery1.Fieldbyname('RsMxe').Value;
+      asheet.cells[k,39].value:=copy(floattostr(ADOQuery1.Fieldbyname('Irm').Value),1,6)+' KW/m2';
+//      asheet.cells[k,40].value:='Tester';
+//      asheet.cells[k,41].value:='Cell power';
+//      asheet.cells[k,42].value:='Material info';
+//      asheet.cells[k,43].value:='Glass';
+//      asheet.cells[k,44].value:='Cell_Origin';
+//      asheet.cells[k,45].value:='Cell_Type';
+//      asheet.cells[k,46].value:='ETL Control Number';
+//      asheet.cells[k,j].value:=ADOQuery1.Fields[j].Value;
+      k:=k+1;
+      ADOQuery1.Next;
+    end;
+{
+  asheet:= ExcelApplication1.Worksheets.Item[2];
+
+  k:=2;
+  asheet.cells[k,2].value:='Module S/N';
+  asheet.cells[k,3].value:='μA';
+  k:=k+1;
+  ADOQuery1.first;
+  FOR i := 1 to ADOQuery1.RecordCount do
+    begin
+      asheet.cells[k,2].value:=ADOQuery1.Fieldbyname('SN').Value;
+      asheet.cells[k,3].value:=floattostr(ADOQuery1.Fieldbyname('R1').Value);
+      k:=k+1;
+      ADOQuery1.Next;
+    end;
+}
+end;
+
+procedure TForm1.Button14Click(Sender: TObject);
+VAR
+  asheet:variant;
+  i,j,k:INTEGER;
+begin
+  ADOQuery1.close;
+  ADOQuery1.SQL.Clear;
+//  ADOQuery1.SQL.add('select SFCSNTD.CN,SFCSNTD.SER,SFCSNTD.SN,SFCSNTD.CSN,MesRes.RsMxp,MesRes.RsVoc,MesRes.RsIsc,MesRes.RsVpm,MesRes.RsIpm,MesRes.RsEff,MesT.T4,MesRes.RsRsh,MesRes.RsRsr,MesRes.RsMxe,Mes.DtCr,Mes.StId,MesRes.Irm,SFCSNTE.PN,SFCSNTE.MN,SFCSNTJ.R1');
+//  ADOQuery1.sql.add('from Mes,MesRes,MesT,SFCSNTD,SFCSNTE,SFCSNTJ');
+  ADOQuery1.SQL.add('select SFCSNTD.CN,SFCSNTD.SER,SFCSNTD.SN,SFCSNTD.CSN,SFCSNTJ.R1,SFCSNTJ.R2');
+  ADOQuery1.sql.add('from SFCSNTD,SFCSNTJ');
+//  ADOQuery1.SQL.add('select SFCSNTD.CN,SFCSNTD.SER,SFCSNTD.SN,SFCSNTD.CSN,MesRes.RsMxp,MesRes.RsVoc,MesRes.RsIsc,MesRes.RsVpm,MesRes.RsIpm,MesRes.RsEff,MesT.T4,MesRes.RsRsh,MesRes.RsRsr,MesRes.RsMxe,Mes.DtCr,Mes.StId,MesRes.Irm,SFCSNTE.PN,SFCSNTE.MN');
+//  ADOQuery1.sql.add('from Mes,MesRes,MesT,SFCSNTD,SFCSNTE');
+  ADOQuery1.sql.add('where SFCSNTD.CN>=:cn1 ');
+  ADOQuery1.sql.add('and SFCSNTD.CN<=:cn2 ');
+//  ADOQuery1.sql.add('and Mes.SerN = SFCSNTD.SN ');
+//  ADOQuery1.sql.add('and Mes.SerN = SFCSNTJ.SN ');
+//  ADOQuery1.sql.add('and Mes.Id=MesRes.Id');
+//  ADOQuery1.sql.add('and MesT.MesId=Mes.Id');
+//  ADOQuery1.sql.add('and SFCSNTD.CN=SFCSNTE.CN');
+//  ADOQuery1.sql.add('and Mes.OK=1');
+//  ADOQuery1.sql.add('and Mes.StId=MesRes.StId');       //2010.4.16 增加 simulator Id
+//  ADOQuery1.sql.add('and Mes.StId=MesT.StId');
+  ADOQuery1.sql.add('and SFCSNTD.SN=SFCSNTJ.SN');
+  ADOQuery1.sql.add('and SFCSNTD.OK=1');
+  ADOQuery1.sql.add('and SFCSNTJ.OK=1');
+  ADOQuery1.sql.add('order by SFCSNTD.CN,SFCSNTD.SER');
+  ADOQuery1.Parameters.parambyname('cn1').value:= Edit5.text;
+  ADOQuery1.Parameters.parambyname('cn2').value:= Edit6.text;
+  ADOQuery1.open;
+  ADOQuery1.First;
+
+  ExcelApplication1.Visible[0]:=true;
+  ExcelApplication1.Workbooks.Add(xlwbatworksheet,0);
+//  ExcelApplication1.Worksheets.Add(emptyparam,emptyparam,emptyparam,emptyparam,1);
+  asheet:= ExcelApplication1.Worksheets.Item[1];
+
+{
+  k:=1;
+  asheet.cells[k,1].value:='Flash report';
+  k:=k+1;
+  asheet.cells[k,1].value:='Ship to:';
+  k:=k+1;
+  asheet.cells[k,1].value:='Module type:';
+  k:=k+1;
+  asheet.cells[k,1].value:='PO number:';
+  k:=k+1;
+  asheet.cells[k,1].value:='Quantity:';
+  k:=k+1;
+  asheet.cells[k,1].value:='Average Power output:';
+  k:=k+1;
+  asheet.cells[k,1].value:='Power range:';
+  k:=k+1;
+
+  asheet.cells[k,1].value:='Order No.';
+  asheet.cells[k,2].value:='Shipment Ref No.';
+  asheet.cells[k,3].value:='Shipment date';
+  asheet.cells[k,4].value:='Pallet No';
+  asheet.cells[k,5].value:='Container';
+  asheet.cells[k,6].value:='Ship To';
+  asheet.cells[k,7].value:='Invoice no';
+  asheet.cells[k,8].value:='Serial_Number';
+  asheet.cells[k,9].value:='Model';
+  asheet.cells[k,10].value:='Module Part No';
+  asheet.cells[k,11].value:='TravelCard';
+  asheet.cells[k,12].value:='Tester Operator';
+  asheet.cells[k,13].value:='Production_Date';
+  asheet.cells[k,14].value:='Production_Line';
+  asheet.cells[k,15].value:='Lamination_Date';
+  asheet.cells[k,16].value:='Laminator';
+  asheet.cells[k,17].value:='CELL EFF';
+  asheet.cells[k,18].value:='cell lot #';
+  asheet.cells[k,19].value:='EVA1';
+  asheet.cells[k,20].value:='EVA2';
+  asheet.cells[k,21].value:='EVA1 Supplier';
+  asheet.cells[k,22].value:='EVA2 Supplier';
+  asheet.cells[k,23].value:='Backsheet Part#';
+  asheet.cells[k,24].value:='Backsheet Supplier';
+  asheet.cells[k,25].value:='Cell production date';
+  asheet.cells[k,26].value:='TestDate';
+  asheet.cells[k,27].value:='Test Time';
+  asheet.cells[k,28].value:='TEMP';
+  asheet.cells[k,29].value:='Pmpp';
+  asheet.cells[k,30].value:='Production Class';
+  asheet.cells[k,31].value:='Voc';
+  asheet.cells[k,32].value:='Isc';
+  asheet.cells[k,33].value:='Vmp';
+  asheet.cells[k,34].value:='Imp';
+  asheet.cells[k,35].value:='Rsh';
+  asheet.cells[k,36].value:='Rs';
+  asheet.cells[k,37].value:='FF';
+  asheet.cells[k,38].value:='Eff';
+  asheet.cells[k,39].value:='Irradiance';
+  asheet.cells[k,40].value:='Tester';
+  asheet.cells[k,41].value:='Cell power';
+  asheet.cells[k,42].value:='Material info';
+  asheet.cells[k,43].value:='Glass';
+  asheet.cells[k,44].value:='Cell_Origin';
+  asheet.cells[k,45].value:='Cell_Type';
+  asheet.cells[k,46].value:='ETL Control Number';
+  k:=k+1;
+
+  FOR i := 1 to ADOQuery1.RecordCount do
+    begin
+//      asheet.cells[k,1].value:='Order No.';
+//      asheet.cells[k,2].value:='Shipment Ref No.';
+//      asheet.cells[k,3].value:='Shipment date';
+      asheet.cells[k,4].value:=ADOQuery1.Fieldbyname('CN').Value;
+//      asheet.cells[k,5].value:='Container';
+//      asheet.cells[k,6].value:='Ship To';
+//      asheet.cells[k,7].value:='Invoice no';
+      asheet.cells[k,8].value:=ADOQuery1.Fieldbyname('SN').Value;
+//      asheet.cells[k,9].value:=ADOQuery1.Fieldbyname('MN').Value;
+//      asheet.cells[k,10].value:=ADOQuery1.Fieldbyname('PN').Value;
+//      asheet.cells[k,11].value:='TravelCard';
+//      asheet.cells[k,12].value:='Tester Operator';
+//      asheet.cells[k,13].value:='Production_Date';
+      asheet.cells[k,14].value:=ADOQuery1.Fieldbyname('StId').Value;
+//      asheet.cells[k,15].value:='Lamination_Date';
+//      asheet.cells[k,16].value:='Laminator';
+//      asheet.cells[k,17].value:='CELL EFF';
+//      asheet.cells[k,18].value:='cell lot #';
+//      asheet.cells[k,19].value:='EVA1';
+//      asheet.cells[k,20].value:='EVA2';
+//      asheet.cells[k,21].value:='EVA1 Supplier';
+//      asheet.cells[k,22].value:='EVA2 Supplier';
+//      asheet.cells[k,23].value:='Backsheet Part#';
+//      asheet.cells[k,24].value:='Backsheet Supplier';
+//      asheet.cells[k,25].value:='Cell production date';
+      asheet.cells[k,26].value:=copy(ADOQuery1.Fieldbyname('DtCr').Value,1,10);
+      asheet.cells[k,27].value:=copy(ADOQuery1.Fieldbyname('DtCr').Value,12,8);
+      asheet.cells[k,28].value:=ADOQuery1.Fieldbyname('T4').Value;
+      asheet.cells[k,29].value:=ADOQuery1.Fieldbyname('RsMxp').Value;
+      asheet.cells[k,30].value:='Class A';
+      asheet.cells[k,31].value:=ADOQuery1.Fieldbyname('RsVoc').Value;
+      asheet.cells[k,32].value:=ADOQuery1.Fieldbyname('RsIsc').Value;
+      asheet.cells[k,33].value:=ADOQuery1.Fieldbyname('RsVpm').Value;
+      asheet.cells[k,34].value:=ADOQuery1.Fieldbyname('RsIpm').Value;
+      asheet.cells[k,35].value:=ADOQuery1.Fieldbyname('RsRsh').Value;
+      asheet.cells[k,36].value:=ADOQuery1.Fieldbyname('RsRsr').Value;
+      asheet.cells[k,37].value:=ADOQuery1.Fieldbyname('RsEff').Value;
+      asheet.cells[k,38].value:=ADOQuery1.Fieldbyname('RsMxe').Value;
+      asheet.cells[k,39].value:=copy(floattostr(ADOQuery1.Fieldbyname('Irm').Value),1,6)+' KW/m2';
+//      asheet.cells[k,40].value:='Tester';
+//      asheet.cells[k,41].value:='Cell power';
+//      asheet.cells[k,42].value:='Material info';
+//      asheet.cells[k,43].value:='Glass';
+//      asheet.cells[k,44].value:='Cell_Origin';
+//      asheet.cells[k,45].value:='Cell_Type';
+//      asheet.cells[k,46].value:='ETL Control Number';
+//      asheet.cells[k,j].value:=ADOQuery1.Fields[j].Value;
+      k:=k+1;
+      ADOQuery1.Next;
+    end;
+}
+
+//  asheet:= ExcelApplication1.Worksheets.Item[2];
+
+  k:=2;
+  asheet.cells[k,2].value:='Module S/N';
+  asheet.cells[k,3].value:='μA';
+  asheet.cells[k,4].value:='GΩ';
+  k:=k+1;
+  ADOQuery1.first;
+  FOR i := 1 to ADOQuery1.RecordCount do
+    begin
+      asheet.cells[k,2].value:=ADOQuery1.Fieldbyname('SN').Value;
+      asheet.cells[k,3].value:=floattostr(ADOQuery1.Fieldbyname('R1').Value);
+      asheet.cells[k,4].value:=floattostr(ADOQuery1.Fieldbyname('R2').Value);
+      asheet.cells[k,5].value:=ADOQuery1.Fieldbyname('CN').Value;
+      asheet.cells[k,6].value:=ADOQuery1.Fieldbyname('SER').Value;
+      k:=k+1;
+      ADOQuery1.Next;
+    end;
+end;
+
+procedure TForm1.Button16Click(Sender: TObject);
+begin
+  with form4 do
+      begin
+        ADOQuery1.close;
+        ADOQuery1.SQL.Clear;
+        ADOQuery1.SQL.add('select SFCSNTD.CN,SFCSNTD.SER,SFCSNTJ.SN,SFCSNTJ.R1,SFCSNTJ.R2');
+        ADOQuery1.sql.add('from SFCSNTD,SFCSNTJ');                                                                                                                                                       // 2011.01.18 增加客戶序號
+        ADOQuery1.sql.add('where SFCSNTD.CN =:cn1 ');
+        ADOQuery1.sql.add('and SFCSNTJ.SN = SFCSNTD.SN ');
+        ADOQuery1.sql.add('and SFCSNTJ.OK=1');
+        ADOQuery1.sql.add('and SFCSNTD.OK=1');
+        ADOQuery1.sql.add('order by SFCSNTD.SER');
+        ADOQuery1.Parameters.parambyname('cn1').value:= Edit1.text;
+        ADOQuery1.open;
+        Label2.Caption:=inttostr(ADOQuery1.RecordCount);
+        show;
+      end
+end;
+
+procedure TForm1.Button15Click(Sender: TObject);
+begin
+  with form4 do
+      begin
+        ADOQuery1.close;
+        ADOQuery1.SQL.Clear;
+        ADOQuery1.SQL.add('select DT,WN,SN,R1,R2,R3');
+        ADOQuery1.sql.add('from SFCSNTJ');
+        ADOQuery1.sql.add('where DT >=:D1 ');
+        ADOQuery1.sql.add('and DT <=:D2 ');
+        if CheckBox1.Checked=true then ADOQuery1.sql.add('and OK=1');
+        if ComboBox1.ItemIndex= 0 then ADOQuery1.sql.add('order by SN');
+        if ComboBox1.ItemIndex= 1 then ADOQuery1.sql.add('order by DT');
+        ADOQuery1.Parameters.parambyname('D1').value:= Edit3.text;
+        ADOQuery1.Parameters.parambyname('D2').value:= Edit4.text;
+        ADOQuery1.open;
+        Label2.Caption:=inttostr(ADOQuery1.RecordCount);
+        ADOQuery1.first;
+        show;
+      end
+end;
+
+procedure TForm1.Button17Click(Sender: TObject);
+VAR
+  asheet:variant;
+  i,j,k:INTEGER;
+  s:string;
+begin
+  ADOQuery1.close;
+  ADOQuery1.SQL.Clear;
+  ADOQuery1.SQL.add('select SFCSNTD.CN,SFCSNTD.SER,Mes.DtCr,SFCSNTD.SN,MesRes.RsMxp,MesRes.RsVoc,MesRes.RsIsc,MesRes.RsVpm,MesRes.RsIpm,MesRes.RsMxe,MesRes.RsRsr,MesRes.RsRsh,MesRes.RsEff');
+  ADOQuery1.sql.add('from Mes,MesRes,SFCSNTD');                                   //2011 .12.14 增加 Mes.DtCr
+  ADOQuery1.sql.add('where SFCSNTD.CN>=:cn1 ');
+  ADOQuery1.sql.add('and SFCSNTD.CN<=:cn2 ');
+  ADOQuery1.sql.add('and Mes.SerN = SFCSNTD.SN ');
+  ADOQuery1.sql.add('and Mes.Id=MesRes.Id');
+  ADOQuery1.sql.add('and Mes.OK=1');
+  ADOQuery1.sql.add('and Mes.StId=MesRes.StId');       //2010.4.16 增加 simulator Id
+  ADOQuery1.sql.add('and SFCSNTD.OK=1');
+  ADOQuery1.sql.add('order by SFCSNTD.CN,SFCSNTD.SER');
+  ADOQuery1.Parameters.parambyname('cn1').value:= Edit5.text;
+  ADOQuery1.Parameters.parambyname('cn2').value:= Edit6.text;
+  ADOQuery1.open;
+  ADOQuery1.First;
+
+  ExcelApplication1.Visible[0]:=true;
+  ExcelApplication1.Workbooks.Add(xlwbatworksheet,0);
+  asheet:= ExcelApplication1.Worksheets.Item[1];
+
+  k:=2;
+
+  FOR i := 1 to ADOQuery1.RecordCount do
+    begin
+      if ADOQuery1.Fields[1].Value=1 then
+        begin
+          k:=k+2;
+          asheet.cells[k,6].value:='CARTON NO.:'+ADOQuery1.Fields[0].Value;
+          k:=k+1;
+          asheet.cells[k,1].value:='NO.';
+          asheet.cells[k,2].value:='DATE';                                       //2011 .12.14 增加 date
+          {
+          asheet.cells[k,2].value:='S/N';
+          asheet.cells[k,3].value:='Power (W)';
+          asheet.cells[k,4].value:='Voc';
+          asheet.cells[k,5].value:='Isc';
+          asheet.cells[k,6].value:='Vmp';
+          asheet.cells[k,7].value:='Imp';
+          asheet.cells[k,8].value:='Judgement';
+          }
+          asheet.cells[k,3].value:='S/N';
+          asheet.cells[k,4].value:='Power (W)';
+          asheet.cells[k,5].value:='Voc';
+          asheet.cells[k,6].value:='Isc';
+          asheet.cells[k,7].value:='Vmp';
+          asheet.cells[k,8].value:='Imp';
+          asheet.cells[k,9].value:='Judgement';
+          k:=k+1;
+        end;
+
+      for j := 3 to 8  do
+        begin
+          asheet.cells[k,j].value:=ADOQuery1.Fields[j].Value;
+        end;
+
+      s:=floattostr(ADOQuery1.Fields[4].Value);
+      s:=copy(s,1,3);
+      asheet.cells[k,4].value:=s;
+      asheet.cells[k,1].value:=ADOQuery1.Fields[1].Value;
+      asheet.cells[k,2].value:=copy(ADOQuery1.Fields[2].Value,1,10);             //2011 .12.14 增加 date
+{
+      asheet.cells[k,3].value:=ADOQuery1.Fields[3].Value;
+      asheet.cells[k,4].value:=floattostrF(ADOQuery1.Fields[4].Value,ffNumber,7,0);
+      asheet.cells[k,5].value:=floattostrF(ADOQuery1.Fields[5].Value,ffNumber,7,2);
+      asheet.cells[k,6].value:=floattostrF(ADOQuery1.Fields[6].Value,ffNumber,7,2);
+      asheet.cells[k,7].value:=floattostrF(ADOQuery1.Fields[7].Value,ffNumber,7,2);
+      asheet.cells[k,8].value:=floattostrF(ADOQuery1.Fields[8].Value,ffNumber,7,2);
+}
+      asheet.cells[k,9].value:='OK';
+      k:=k+1;
+      ADOQuery1.Next;
+    end;
+end;
+
+procedure TForm1.Button18Click(Sender: TObject);                                 //toshiba type
+VAR
+  asheet:variant;
+  i,j,k:INTEGER;
+begin
+  ADOQuery1.close;
+  ADOQuery1.SQL.Clear;
+  ADOQuery1.SQL.add('select SFCSNTD.SER,SFCSNTD.SN,SFCSNTD.CN,MesCel.CelT,MesRes.RsMxp,MesRes.RsVpm,MesRes.RsVoc,MesRes.RsIpm,MesRes.RsIsc,MesRes.RsEff');
+  ADOQuery1.sql.add('from Mes,MesRes,MesCel,SFCSNTD,SFCSNTE');
+  ADOQuery1.sql.add('where SFCSNTD.CN>=:cn1 ');
+  ADOQuery1.sql.add('and SFCSNTD.CN<=:cn2 ');
+  ADOQuery1.sql.add('and Mes.SerN = SFCSNTD.SN ');
+  ADOQuery1.sql.add('and Mes.Id=MesRes.Id');
+  ADOQuery1.sql.add('and Mes.CelId=MesCel.Id');
+  ADOQuery1.sql.add('and SFCSNTD.CN=SFCSNTE.CN');
+  ADOQuery1.sql.add('and Mes.OK=1');
+  ADOQuery1.sql.add('and Mes.StId=MesRes.StId');       //2010.4.16 增加 simulator Id
+  ADOQuery1.sql.add('and Mes.StId=MesCel.StId');
+  ADOQuery1.sql.add('and SFCSNTD.OK=1');
+  ADOQuery1.sql.add('order by SFCSNTD.CN,SFCSNTD.SER');
+  ADOQuery1.Parameters.parambyname('cn1').value:= Edit5.text;
+  ADOQuery1.Parameters.parambyname('cn2').value:= Edit6.text;
+  ADOQuery1.open;
+  ADOQuery1.First;
+
+  ExcelApplication1.Visible[0]:=true;
+  ExcelApplication1.Workbooks.Add(xlwbatworksheet,0);
+  asheet:= ExcelApplication1.Worksheets.Item[1];
+
+
+  k:=1;
+  k:=k+1;
+
+  asheet.cells[k,1].value:='S/N';
+  asheet.cells[k,2].value:='ModuleType';
+  asheet.cells[k,3].value:='Test Id';
+  asheet.cells[k,4].value:='Power';
+  asheet.cells[k,5].value:='VmpMod';
+  asheet.cells[k,6].value:='ImpMod';
+  asheet.cells[k,7].value:='VocMod';
+  asheet.cells[k,8].value:='IscMod';
+  asheet.cells[k,9].value:='FF';
+  asheet.cells[k,10].value:='Class';
+  asheet.cells[k,11].value:='Pallet No.';
+  asheet.cells[k,12].value:='Note';
+  asheet.cells[k,13].value:='Power per Box';
+  asheet.cells[k,14].value:='Container No.';
+
+  k:=k+1;
+
+  FOR i := 1 to ADOQuery1.RecordCount do
+    begin
+      asheet.cells[k,1].value:=ADOQuery1.Fieldbyname('SN').Value;
+      asheet.cells[k,3].value:=ADOQuery1.Fieldbyname('CelT').Value;
+      asheet.cells[k,4].value:=ADOQuery1.Fieldbyname('RsMxp').Value;
+      asheet.cells[k,5].value:=ADOQuery1.Fieldbyname('RsVpm').Value;
+      asheet.cells[k,6].value:=ADOQuery1.Fieldbyname('RsIpm').Value;
+      asheet.cells[k,7].value:=ADOQuery1.Fieldbyname('RsVoc').Value;
+      asheet.cells[k,8].value:=ADOQuery1.Fieldbyname('RsIsc').Value;
+      asheet.cells[k,9].value:=ADOQuery1.Fieldbyname('RsEff').Value;
+      asheet.cells[k,10].value:='NPA+';
+      asheet.cells[k,11].value:=ADOQuery1.Fieldbyname('CN').Value;
+      k:=k+1;
+      ADOQuery1.Next;
+    end;
+
+end;
+
+procedure TForm1.Button19Click(Sender: TObject);
+VAR
+  asheet:variant;
+  i,j,k:INTEGER;
+begin
+  ADOQuery1.close;
+  ADOQuery1.SQL.Clear;
+  ADOQuery1.SQL.add('select SFCSNTD.SER,SFCSNTD.SN,SFCSNTD.CN,MesRes.RsMxp,MesRes.RsVpm,MesRes.RsVoc,MesRes.RsIpm,MesRes.RsIsc');
+  ADOQuery1.sql.add('from Mes,MesRes,SFCSNTD,SFCSNTE');
+  ADOQuery1.sql.add('where SFCSNTD.CN>=:cn1 ');
+  ADOQuery1.sql.add('and SFCSNTD.CN<=:cn2 ');
+  ADOQuery1.sql.add('and Mes.SerN = SFCSNTD.SN ');
+  ADOQuery1.sql.add('and Mes.Id=MesRes.Id');
+  ADOQuery1.sql.add('and SFCSNTD.CN=SFCSNTE.CN');
+  ADOQuery1.sql.add('and Mes.OK=1');
+  ADOQuery1.sql.add('and Mes.StId=MesRes.StId');       //2010.4.16 增加 simulator Id
+  ADOQuery1.sql.add('and SFCSNTD.OK=1');
+  ADOQuery1.sql.add('order by SFCSNTD.CN,SFCSNTD.SER');
+  ADOQuery1.Parameters.parambyname('cn1').value:= Edit5.text;
+  ADOQuery1.Parameters.parambyname('cn2').value:= Edit6.text;
+  ADOQuery1.open;
+  ADOQuery1.First;
+
+  ExcelApplication1.Visible[0]:=true;
+  ExcelApplication1.Workbooks.Add(xlwbatworksheet,0);
+  asheet:= ExcelApplication1.Worksheets.Item[1];
+
+
+  k:=1;
+  k:=k+1;
+
+  asheet.cells[k,1].value:='Serial Number';
+  asheet.cells[k,2].value:='Item Number';
+  asheet.cells[k,3].value:='pmpp';
+  asheet.cells[k,4].value:='umpp';
+  asheet.cells[k,5].value:='impp';
+  asheet.cells[k,6].value:='isc';
+  asheet.cells[k,7].value:='uoc';
+  asheet.cells[k,8].value:='Pallet Number';
+  asheet.cells[k,9].value:='Cont Number';
+
+  k:=k+1;
+
+  FOR i := 1 to ADOQuery1.RecordCount do
+    begin
+      asheet.cells[k,1].value:=ADOQuery1.Fieldbyname('SN').Value;
+      asheet.cells[k,3].value:=ADOQuery1.Fieldbyname('RsMxp').Value;
+      asheet.cells[k,4].value:=ADOQuery1.Fieldbyname('RsVpm').Value;
+      asheet.cells[k,5].value:=ADOQuery1.Fieldbyname('RsIpm').Value;
+      asheet.cells[k,6].value:=ADOQuery1.Fieldbyname('RsIsc').Value;
+      asheet.cells[k,7].value:=ADOQuery1.Fieldbyname('RsVoc').Value;
+      asheet.cells[k,8].value:=ADOQuery1.Fieldbyname('CN').Value;
+
+      k:=k+1;
+      ADOQuery1.Next;
+    end;
+
+end;
+
+end.
